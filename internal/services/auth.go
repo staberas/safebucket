@@ -153,9 +153,7 @@ func (s AuthService) finalizeLogin(
 			ProviderName: providerName,
 		}),
 	}
-	if logErr := s.ActivityLogger.Send(action); logErr != nil {
-		logger.Error("Failed to log login activity", zap.Error(logErr))
-	}
+	s.logLoginActivityAsync(logger, action)
 
 	return handlers.AuthFlowResult{
 		Status: http.StatusOK,
@@ -515,9 +513,7 @@ func (s AuthService) completeMFALogin(
 			ProviderName: s.Providers[user.ProviderKey].Name,
 		}),
 	}
-	if logErr := s.ActivityLogger.Send(action); logErr != nil {
-		logger.Error("Failed to log login activity", zap.Error(logErr))
-	}
+	s.logLoginActivityAsync(logger, action)
 
 	return handlers.AuthFlowResult{
 		Status: http.StatusOK,
@@ -529,6 +525,16 @@ func (s AuthService) completeMFALogin(
 			user.ProviderKey,
 		),
 	}, nil
+}
+
+// logLoginActivityAsync keeps a slow or locked activity backend from delaying
+// the authentication response after a session has already been created.
+func (s AuthService) logLoginActivityAsync(logger *zap.Logger, action models.Activity) {
+	go func() {
+		if logErr := s.ActivityLogger.Send(action); logErr != nil {
+			logger.Error("Failed to log login activity", zap.Error(logErr))
+		}
+	}()
 }
 
 func (s AuthService) GetProviderList(

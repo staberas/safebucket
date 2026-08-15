@@ -52,6 +52,78 @@ func (m *MockActivityLogger) Close() error { return nil }
 
 var _ activity.IActivityLogger = (*MockActivityLogger)(nil)
 
+type BlockingActivityLogger struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (m *BlockingActivityLogger) Send(_ models.Activity) error {
+	close(m.started)
+	<-m.release
+	return nil
+}
+
+func (m *BlockingActivityLogger) Search(
+	_ map[string][]string, _, _ time.Time, _ int,
+) ([]map[string]any, error) {
+	return nil, nil
+}
+
+func (m *BlockingActivityLogger) CountByHour(
+	_ map[string][]string,
+	_ int,
+) ([]models.TimeSeriesPoint, error) {
+	return nil, nil
+}
+
+func (m *BlockingActivityLogger) Close() error { return nil }
+
+var _ activity.IActivityLogger = (*BlockingActivityLogger)(nil)
+
+func TestCompleteMFALogin_DoesNotWaitForActivityLogger(t *testing.T) {
+	activityLogger := &BlockingActivityLogger{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	defer close(activityLogger.release)
+
+	service := AuthService{
+		Cache: &MockCache{},
+		AuthConfig: models.AuthConfig{
+			TokenSecret: "test-secret-key-for-jwt-signing",
+		},
+		Providers: configuration.Providers{
+			"local": {
+				Name: "Local",
+				Type: models.LocalProviderType,
+			},
+		},
+		ActivityLogger: activityLogger,
+	}
+	user := models.User{
+		ID:           uuid.New(),
+		Email:        "test@example.com",
+		Role:         models.RoleUser,
+		ProviderType: models.LocalProviderType,
+		ProviderKey:  "local",
+	}
+
+	result, err := service.completeMFALogin(
+		false,
+		zap.NewNop(),
+		models.UserClaims{},
+		&user,
+	)
+	require.NoError(t, err)
+	assert.NotEmpty(t, cookieValue(result, "safebucket_refresh_token"))
+
+	select {
+	case <-activityLogger.started:
+	case <-time.After(time.Second):
+		t.Fatal("activity logger was not called")
+	}
+}
+
 func TestLogin_UserHasMFA_ConfigMFADisabled_RequiresMFA(t *testing.T) {
 	jwtSecret := "test-secret-key-for-jwt-signing"
 	config := models.AuthConfig{
