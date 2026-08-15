@@ -20,7 +20,7 @@ export function useVerificationFlow({
 }: IUseVerificationFlowProps): IVerificationFlowState {
   const { t } = useTranslation();
   const router = useRouter();
-  const { verifyMFA } = useLogin();
+  const { verifyMFA, verifyWebAuthnMFA } = useLogin();
 
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +37,15 @@ export function useVerificationFlow({
     }
   }, [defaultDeviceId, selectedDeviceId]);
 
+  const isWebAuthnSelected =
+    devices.find((device) => device.id === selectedDeviceId)?.type ===
+    "webauthn";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!isCodeValid(code)) {
+    if (!isWebAuthnSelected && !isCodeValid(code)) {
       setError(t("auth.mfa.error_code_length"));
       return;
     }
@@ -49,7 +53,9 @@ export function useVerificationFlow({
     setIsLoading(true);
 
     const deviceId = devices.length > 0 ? selectedDeviceId : undefined;
-    const result = await verifyMFA(code, deviceId);
+    const result = isWebAuthnSelected
+      ? await verifyWebAuthnMFA(deviceId)
+      : await verifyMFA(code, deviceId);
 
     if (result.success) {
       setIsVerified(true);
@@ -77,6 +83,7 @@ export function useVerificationFlow({
     error,
     isLoading,
     isVerified,
+    isWebAuthnSelected,
     handleSubmit,
     handleBackToLogin,
   };

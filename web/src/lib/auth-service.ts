@@ -1,6 +1,7 @@
 import type {
   ILoginForm,
   ILoginResponse,
+  IWebAuthnLoginBeginResponse,
   Session,
 } from "@/components/auth-view/types/session";
 import { getApiUrl } from "@/hooks/useConfig";
@@ -85,6 +86,32 @@ export const verifyMFALogin = async (
     return {
       success: false,
       error: error instanceof Error ? error.message : "MFA verification failed",
+    };
+  }
+};
+
+export const verifyWebAuthnMFALogin = async (
+  deviceId?: string,
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const begin = await api.post<IWebAuthnLoginBeginResponse>(
+      "/auth/mfa/webauthn/begin",
+      deviceId ? { device_id: deviceId } : {},
+      { retryOnRateLimit: false },
+    );
+    const { getWebAuthnCredential } = await import("@/lib/webauthn");
+    const credential = await getWebAuthnCredential(begin.options);
+    await api.post(
+      "/auth/mfa/webauthn/finish",
+      { challenge_id: begin.challenge_id, credential },
+      { retryOnRateLimit: false },
+    );
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "WebAuthn verification failed",
     };
   }
 };

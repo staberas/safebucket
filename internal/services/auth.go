@@ -45,6 +45,10 @@ func (s AuthService) Routes() chi.Router {
 	r.Route("/mfa", func(r chi.Router) {
 		r.With(m.Validate[models.MFALoginVerifyBody]).
 			Post("/verify", s.mfaVerifyHandler())
+		r.With(m.Validate[models.WebAuthnLoginBeginBody]).
+			Post("/webauthn/begin", handlers.CreateHandler(s.BeginWebAuthnLogin))
+		r.With(m.Validate[models.WebAuthnLoginFinishBody]).
+			Post("/webauthn/finish", s.webAuthnFinishHandler())
 	})
 	r.Get("/me", handlers.GetOneHandler(s.Me))
 
@@ -455,11 +459,20 @@ func (s AuthService) VerifyMFALogin(
 		zap.String("device_id", deviceID),
 		zap.String("email", user.Email))
 
+	return s.completeMFALogin(isSecure, logger, claims, &user)
+}
+
+func (s AuthService) completeMFALogin(
+	isSecure bool,
+	logger *zap.Logger,
+	claims models.UserClaims,
+	user *models.User,
+) (handlers.AuthFlowResult, error) {
 	if claims.AudienceString() == configuration.AudienceMFAReset {
 		var restrictedToken string
-		restrictedToken, err = h.NewRestrictedAccessToken(
+		restrictedToken, err := h.NewRestrictedAccessToken(
 			s.AuthConfig.TokenSecret,
-			&user,
+			user,
 			configuration.AudienceMFAReset,
 			true,
 			claims.ChallengeID,
@@ -478,7 +491,7 @@ func (s AuthService) VerifyMFALogin(
 		}, nil
 	}
 
-	sid, tokens, err := mfa.GenerateTokens(s.AuthConfig, &user)
+	sid, tokens, err := mfa.GenerateTokens(s.AuthConfig, user)
 	if err != nil {
 		return handlers.AuthFlowResult{}, err
 	}

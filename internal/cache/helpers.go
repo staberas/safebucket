@@ -88,6 +88,32 @@ func MarkTOTPCodeUsed(c ICache, deviceID string, code string) (bool, error) {
 	return c.SetNX(key, "1", time.Duration(configuration.TOTPCodeTTL)*time.Second)
 }
 
+func SetWebAuthnRegistrationSession(c ICache, deviceID string, session any) error {
+	return setJSON(c, fmt.Sprintf(configuration.CacheWebAuthnRegistrationKey, deviceID), session,
+		configuration.CacheWebAuthnSessionExpiry)
+}
+
+func GetWebAuthnRegistrationSession[T any](c ICache, deviceID string) (T, bool, error) {
+	return getJSON[T](c, fmt.Sprintf(configuration.CacheWebAuthnRegistrationKey, deviceID))
+}
+
+func DeleteWebAuthnRegistrationSession(c ICache, deviceID string) error {
+	return c.Del(fmt.Sprintf(configuration.CacheWebAuthnRegistrationKey, deviceID))
+}
+
+func SetWebAuthnLoginSession(c ICache, challengeID string, session any) error {
+	return setJSON(c, fmt.Sprintf(configuration.CacheWebAuthnLoginKey, challengeID), session,
+		configuration.CacheWebAuthnSessionExpiry)
+}
+
+func GetWebAuthnLoginSession[T any](c ICache, challengeID string) (T, bool, error) {
+	return getJSON[T](c, fmt.Sprintf(configuration.CacheWebAuthnLoginKey, challengeID))
+}
+
+func DeleteWebAuthnLoginSession(c ICache, challengeID string) error {
+	return c.Del(fmt.Sprintf(configuration.CacheWebAuthnLoginKey, challengeID))
+}
+
 func GetRateLimit(c ICache, userIdentifier string, requestsPerMinute int) (int, error) {
 	key := fmt.Sprintf(configuration.CacheAppRateLimitKey, userIdentifier)
 

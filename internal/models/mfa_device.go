@@ -9,7 +9,8 @@ import (
 type MFADeviceType string
 
 const (
-	MFADeviceTypeTOTP MFADeviceType = "totp"
+	MFADeviceTypeTOTP     MFADeviceType = "totp"
+	MFADeviceTypeWebAuthn MFADeviceType = "webauthn"
 )
 
 type MFADevice struct {

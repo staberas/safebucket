@@ -8,6 +8,7 @@ import { MFAEmptyState } from "@/components/mfa-view/components/MFAEmptyState";
 import { MFAActions } from "@/components/mfa-view/components/MFAActions";
 import { MFASetupDialog } from "@/components/mfa-view/components/MFASetupDialog";
 import { MFADeleteDialog } from "@/components/mfa-view/components/MFADeleteDialog";
+import { WebAuthnSetupDialog } from "@/components/mfa-view/components/WebAuthnSetupDialog";
 import {
   mfaDevicesQueryOptions,
   useSetDefaultMFADeviceMutation,
@@ -28,10 +29,12 @@ export function MFAView({ className, providerType }: MFAViewProps) {
   const mfaEnabled = deviceCount > 0;
 
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [webAuthnDialogOpen, setWebAuthnDialogOpen] = useState(false);
   const [deleteDeviceId, setDeleteDeviceId] = useState<string | null>(null);
 
   const closeAllDialogs = () => {
     setSetupDialogOpen(false);
+    setWebAuthnDialogOpen(false);
     setDeleteDeviceId(null);
   };
 
@@ -55,6 +58,7 @@ export function MFAView({ className, providerType }: MFAViewProps) {
           deviceCount={deviceCount}
           maxDevices={maxDevices}
           onAddDevice={() => setSetupDialogOpen(true)}
+          onAddSecurityKey={() => setWebAuthnDialogOpen(true)}
         />
       </>
     );
@@ -80,6 +84,12 @@ export function MFAView({ className, providerType }: MFAViewProps) {
         deviceId={deleteDeviceId}
         onClose={closeAllDialogs}
         providerType={providerType}
+      />
+      <WebAuthnSetupDialog
+        open={webAuthnDialogOpen}
+        onClose={closeAllDialogs}
+        providerType={providerType}
+        hasExistingDevices={deviceCount > 0}
       />
     </>
   );

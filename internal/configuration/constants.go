@@ -40,6 +40,8 @@ const (
 	CacheAppWorkerActiveRefresh  = 20
 	CacheMFAAttemptsKey          = "mfa:attempts:%s"
 	CacheTOTPUsedKey             = "totp:used:%s:%s"
+	CacheWebAuthnRegistrationKey = "webauthn:registration:%s"
+	CacheWebAuthnLoginKey        = "webauthn:login:%s"
 	CacheUserSessionsKey         = "user:sessions:%s"
 	CacheMultipartStateKey       = "multipart:state:%s"
 )
@@ -53,6 +55,7 @@ const (
 )
 
 const CacheMultipartStateExpiry = 2 * time.Hour
+const CacheWebAuthnSessionExpiry = 5 * time.Minute
 
 const (
 	EventsNotifications  = "notifications"
