@@ -223,6 +223,19 @@ func TestRouteAudienceValidation(t *testing.T) {
 		assert.True(t, allowed, "Password reset MFA tokens SHOULD be allowed for MFA verification")
 	})
 
+	for _, path := range []string{
+		"/api/v1/auth/mfa/webauthn/begin",
+		"/api/v1/auth/mfa/webauthn/finish",
+	} {
+		t.Run("WebAuthn login accepts login MFA tokens: "+path, func(t *testing.T) {
+			assert.True(t, isAudienceAllowedForRoute(configuration.AudienceMFALogin, path, http.MethodPost))
+		})
+
+		t.Run("WebAuthn login rejects reset MFA tokens: "+path, func(t *testing.T) {
+			assert.False(t, isAudienceAllowedForRoute(configuration.AudienceMFAReset, path, http.MethodPost))
+		})
+	}
+
 	t.Run("MFA device list accepts both token types", func(t *testing.T) {
 		path := "/api/v1/mfa/devices"
 
