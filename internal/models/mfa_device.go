@@ -28,7 +28,10 @@ type MFADevice struct {
 }
 
 type MFADevicesListResponse struct {
-	Devices []MFADevice `json:"devices"`
+	Devices     []MFADevice `json:"devices"`
+	MFAEnabled  bool        `json:"mfa_enabled"`
+	DeviceCount int         `json:"device_count"`
+	MaxDevices  int         `json:"max_devices"`
 }
 
 type MFADeviceSetupBody struct {
