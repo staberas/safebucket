@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Smartphone, Star } from "lucide-react";
+import { KeyRound, Smartphone, Star } from "lucide-react";
 import { hasMultipleDevices } from "../helpers/utils";
 import type { IMFADevice } from "@/components/auth-view/types/session";
 import {
@@ -45,7 +45,11 @@ export function MFADeviceSelector({
           {devices.map((device) => (
             <SelectItem key={device.id} value={device.id}>
               <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4" />
+                {device.type === "webauthn" ? (
+                  <KeyRound className="h-4 w-4" />
+                ) : (
+                  <Smartphone className="h-4 w-4" />
+                )}
                 <span>{device.name}</span>
                 {device.is_default && (
                   <span className="ml-1 flex items-center gap-1 text-xs text-muted-foreground">

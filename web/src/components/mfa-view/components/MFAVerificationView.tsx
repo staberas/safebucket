@@ -38,6 +38,7 @@ export function MFAVerificationView({
     error,
     isLoading,
     isVerified,
+    isWebAuthnSelected,
     handleSubmit,
     handleBackToLogin,
   } = useVerificationFlow({
@@ -71,20 +72,27 @@ export function MFAVerificationView({
               disabled={isLoading}
             />
 
-            <MFAVerifyInput
-              value={code}
-              onChange={setCode}
-              disabled={isLoading}
-            />
+            {!isWebAuthnSelected && (
+              <MFAVerifyInput
+                value={code}
+                onChange={setCode}
+                disabled={isLoading}
+              />
+            )}
 
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || code.length !== MFA_CODE_LENGTH}
+              disabled={
+                isLoading ||
+                (!isWebAuthnSelected && code.length !== MFA_CODE_LENGTH)
+              }
             >
               {isLoading
                 ? t("auth.mfa.verifying")
-                : t("auth.mfa.verify_button")}
+                : isWebAuthnSelected
+                  ? t("auth.mfa.use_security_key")
+                  : t("auth.mfa.verify_button")}
             </Button>
 
             <div className="text-center">
