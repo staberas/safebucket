@@ -2,14 +2,8 @@ import { useTranslation } from "react-i18next";
 import { KeyRound, Smartphone, Star } from "lucide-react";
 import { hasMultipleDevices } from "../helpers/utils";
 import type { IMFADevice } from "@/components/auth-view/types/session";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export interface IMFADeviceSelectorProps {
   devices: Array<IMFADevice>;
@@ -32,36 +26,34 @@ export function MFADeviceSelector({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="device-select">{t("auth.mfa.select_device")}</Label>
-      <Select
-        value={selectedDeviceId}
-        onValueChange={onSelectDevice}
-        disabled={disabled}
-      >
-        <SelectTrigger id="device-select" className="w-full">
-          <SelectValue placeholder={t("auth.mfa.select_device")} />
-        </SelectTrigger>
-        <SelectContent>
-          {devices.map((device) => (
-            <SelectItem key={device.id} value={device.id}>
-              <div className="flex items-center gap-2">
-                {device.type === "webauthn" ? (
-                  <KeyRound className="h-4 w-4" />
-                ) : (
-                  <Smartphone className="h-4 w-4" />
-                )}
-                <span>{device.name}</span>
-                {device.is_default && (
-                  <span className="ml-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <Star className="h-3 w-3 fill-current" />
-                    {t("auth.mfa.device_default")}
-                  </span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Label>{t("auth.mfa.select_device")}</Label>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {devices.map((device) => {
+          const selected = device.id === selectedDeviceId;
+
+          return (
+            <Button
+              key={device.id}
+              type="button"
+              variant={selected ? "default" : "outline"}
+              className="h-auto min-h-10 justify-start py-2 text-left"
+              disabled={disabled}
+              aria-pressed={selected}
+              onClick={() => onSelectDevice(device.id)}
+            >
+              {device.type === "webauthn" ? (
+                <KeyRound className="mr-2 h-4 w-4 shrink-0" />
+              ) : (
+                <Smartphone className="mr-2 h-4 w-4 shrink-0" />
+              )}
+              <span className="min-w-0 truncate">{device.name}</span>
+              {device.is_default && (
+                <Star className="ml-auto h-3 w-3 shrink-0 fill-current" />
+              )}
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 }

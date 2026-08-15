@@ -87,7 +87,10 @@ func (s MFAService) ListDevices(
 	}
 
 	return models.MFADevicesListResponse{
-		Devices: devices,
+		Devices:     devices,
+		MFAEnabled:  len(devices) > 0,
+		DeviceCount: len(devices),
+		MaxDevices:  configuration.MaxMFADevicesPerUser,
 	}, nil
 }
 
