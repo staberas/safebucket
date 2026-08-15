@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/safebucket/safebucket/internal/configuration"
 	apierrors "github.com/safebucket/safebucket/internal/errors"
 	"github.com/safebucket/safebucket/internal/models"
 	"github.com/safebucket/safebucket/internal/tests/integration/bootstrap"
@@ -66,5 +67,8 @@ func firstVerifiedDeviceID(t *testing.T, app *bootstrap.TestApp, token string) u
 	status := app.Do(t, http.MethodGet, "/api/v1/mfa/devices", token, nil, &list)
 	require.Equal(t, http.StatusOK, status)
 	require.Len(t, list.Devices, 1, "expected exactly one verified device")
+	require.True(t, list.MFAEnabled)
+	require.Equal(t, 1, list.DeviceCount)
+	require.Equal(t, configuration.MaxMFADevicesPerUser, list.MaxDevices)
 	return list.Devices[0].ID
 }
