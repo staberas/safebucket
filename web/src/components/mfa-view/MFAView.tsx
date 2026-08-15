@@ -24,7 +24,8 @@ export function MFAView({ className, providerType }: MFAViewProps) {
   const setDefaultMutation = useSetDefaultMFADeviceMutation();
 
   const devices = data?.devices ?? [];
-  const maxDevices = data?.max_devices ?? 0;
+  // Older API responses omitted max_devices even though the backend limit is 5.
+  const maxDevices = data?.max_devices ?? 5;
   const deviceCount = devices.length;
   const mfaEnabled = deviceCount > 0;
 
