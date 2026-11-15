@@ -82,6 +82,16 @@ var AuthAudienceRules = []AuthAudienceRule{
 		AllowedAudiences: []string{AudienceMFALogin, AudienceMFAReset},
 	},
 	{
+		ExactPath:        "/api/v1/auth/mfa/webauthn/begin",
+		Method:           http.MethodPost,
+		AllowedAudiences: []string{AudienceMFALogin},
+	},
+	{
+		ExactPath:        "/api/v1/auth/mfa/webauthn/finish",
+		Method:           http.MethodPost,
+		AllowedAudiences: []string{AudienceMFALogin},
+	},
+	{
 		Pattern:          regexp.MustCompile(`^/api/v1/auth/reset-password/` + UUIDv4Pattern + `/complete$`),
 		Method:           http.MethodPost,
 		AllowedAudiences: []string{AudienceMFAReset},

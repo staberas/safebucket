@@ -21,7 +21,7 @@ export interface ILoginForm {
   password: string;
 }
 
-export type MFADeviceType = "totp";
+export type MFADeviceType = "totp" | "webauthn";
 
 export interface IMFADevice {
   id: string;
@@ -45,6 +45,21 @@ export interface IMFADeviceSetupResponse {
   secret: string;
   qr_code_uri: string;
   issuer: string;
+}
+
+export interface IWebAuthnOptions {
+  publicKey: Record<string, any>;
+  mediation?: CredentialMediationRequirement;
+}
+
+export interface IWebAuthnRegistrationBeginResponse {
+  device_id: string;
+  options: IWebAuthnOptions;
+}
+
+export interface IWebAuthnLoginBeginResponse {
+  challenge_id: string;
+  options: IWebAuthnOptions;
 }
 
 export interface ILoginResponse {

@@ -8,6 +8,7 @@ export interface IVerificationFlowState {
   error: string | null;
   isLoading: boolean;
   isVerified: boolean;
+  isWebAuthnSelected: boolean;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   handleBackToLogin: () => void;
 }

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type {
   IMFADeviceSetupResponse,
   IMFADevicesResponse,
+  IWebAuthnRegistrationBeginResponse,
 } from "@/components/auth-view/types/session";
 import { api, fetchApi } from "@/lib/api";
 
@@ -98,6 +99,36 @@ export const useSetDefaultMFADeviceMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MFA_DEVICES_KEY });
       toast.success("MFA device updated");
+    },
+  });
+};
+
+export const useRegisterWebAuthnDeviceMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      name,
+      password,
+      code,
+    }: {
+      name: string;
+      password?: string;
+      code?: string;
+    }) => {
+      const begin = await api.post<IWebAuthnRegistrationBeginResponse>(
+        "/mfa/webauthn/register/begin",
+        { name, password, code },
+        { retryOnRateLimit: false },
+      );
+      const { createWebAuthnCredential } = await import("@/lib/webauthn");
+      const credential = await createWebAuthnCredential(begin.options);
+      await api.post(`/mfa/webauthn/register/${begin.device_id}/finish`, {
+        credential,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MFA_DEVICES_KEY });
+      toast.success("Security key or passkey added");
     },
   });
 };

@@ -195,6 +195,10 @@ func (s RustFSStorage) ListObjects(prefix string, maxKeys int32) ([]string, erro
 	return objects, nil
 }
 
+func (s RustFSStorage) IterateObjects(prefix string, fn func(ObjectInfo) error) error {
+	return s3IterateObjects(s.storage, s.BucketName, prefix, fn)
+}
+
 func (s RustFSStorage) RemoveObject(path string) error {
 	return s.storage.RemoveObject(
 		context.Background(),
@@ -214,11 +218,7 @@ func (s RustFSStorage) RemoveObjects(paths []string) error {
 		}
 	}()
 
-	opts := minio.RemoveObjectsOptions{
-		GovernanceBypass: true,
-	}
-
-	errorCh := s.storage.RemoveObjects(context.Background(), s.BucketName, objectsCh, opts)
+	errorCh := s.storage.RemoveObjects(context.Background(), s.BucketName, objectsCh, minio.RemoveObjectsOptions{})
 
 	for err := range errorCh {
 		if err.Err != nil {

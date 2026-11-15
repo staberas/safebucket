@@ -1,0 +1,55 @@
+name: Publish SafeBucket WebAuthn image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - integration/v0.8.1-webauthn
+    paths:
+      - Dockerfile
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - "internal/database/migrations/**"
+      - "web/**"
+      - ".github/workflows/publish-webauthn-image.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-safebucket-v0.8.1-webauthn
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/safebucket:0.8.1-webauthn
+            ghcr.io/${{ github.repository_owner }}/safebucket:webauthn
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

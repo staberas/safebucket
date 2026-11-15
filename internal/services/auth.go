@@ -45,6 +45,10 @@ func (s AuthService) Routes() chi.Router {
 	r.Route("/mfa", func(r chi.Router) {
 		r.With(m.Validate[models.MFALoginVerifyBody]).
 			Post("/verify", s.mfaVerifyHandler())
+		r.With(m.Validate[models.WebAuthnLoginBeginBody]).
+			Post("/webauthn/begin", handlers.CreateHandler(s.BeginWebAuthnLogin))
+		r.With(m.Validate[models.WebAuthnLoginFinishBody]).
+			Post("/webauthn/finish", s.webAuthnFinishHandler())
 	})
 	r.Get("/me", handlers.GetOneHandler(s.Me))
 
@@ -149,9 +153,7 @@ func (s AuthService) finalizeLogin(
 			ProviderName: providerName,
 		}),
 	}
-	if logErr := s.ActivityLogger.Send(action); logErr != nil {
-		logger.Error("Failed to log login activity", zap.Error(logErr))
-	}
+	s.logLoginActivityAsync(logger, action)
 
 	return handlers.AuthFlowResult{
 		Status: http.StatusOK,
@@ -455,11 +457,20 @@ func (s AuthService) VerifyMFALogin(
 		zap.String("device_id", deviceID),
 		zap.String("email", user.Email))
 
+	return s.completeMFALogin(isSecure, logger, claims, &user)
+}
+
+func (s AuthService) completeMFALogin(
+	isSecure bool,
+	logger *zap.Logger,
+	claims models.UserClaims,
+	user *models.User,
+) (handlers.AuthFlowResult, error) {
 	if claims.AudienceString() == configuration.AudienceMFAReset {
 		var restrictedToken string
-		restrictedToken, err = h.NewRestrictedAccessToken(
+		restrictedToken, err := h.NewRestrictedAccessToken(
 			s.AuthConfig.TokenSecret,
-			&user,
+			user,
 			configuration.AudienceMFAReset,
 			true,
 			claims.ChallengeID,
@@ -478,7 +489,7 @@ func (s AuthService) VerifyMFALogin(
 		}, nil
 	}
 
-	sid, tokens, err := mfa.GenerateTokens(s.AuthConfig, &user)
+	sid, tokens, err := mfa.GenerateTokens(s.AuthConfig, user)
 	if err != nil {
 		return handlers.AuthFlowResult{}, err
 	}
@@ -502,9 +513,7 @@ func (s AuthService) VerifyMFALogin(
 			ProviderName: s.Providers[user.ProviderKey].Name,
 		}),
 	}
-	if logErr := s.ActivityLogger.Send(action); logErr != nil {
-		logger.Error("Failed to log login activity", zap.Error(logErr))
-	}
+	s.logLoginActivityAsync(logger, action)
 
 	return handlers.AuthFlowResult{
 		Status: http.StatusOK,
@@ -516,6 +525,16 @@ func (s AuthService) VerifyMFALogin(
 			user.ProviderKey,
 		),
 	}, nil
+}
+
+// logLoginActivityAsync keeps a slow or locked activity backend from delaying
+// the authentication response after a session has already been created.
+func (s AuthService) logLoginActivityAsync(logger *zap.Logger, action models.Activity) {
+	go func() {
+		if logErr := s.ActivityLogger.Send(action); logErr != nil {
+			logger.Error("Failed to log login activity", zap.Error(logErr))
+		}
+	}()
 }
 
 func (s AuthService) GetProviderList(
