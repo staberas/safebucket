@@ -79,8 +79,8 @@ export function WebAuthnSetupDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-            <KeyRound className="h-5 w-5 text-blue-600" />
+          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <KeyRound className="h-5 w-5 text-primary" />
           </div>
           <DialogTitle>{t("auth.mfa.add_security_key_title")}</DialogTitle>
           <DialogDescription>
