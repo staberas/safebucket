@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { Smartphone, Star, Trash2 } from "lucide-react";
+import { KeyRound, Smartphone, Star, Trash2 } from "lucide-react";
 
 import type { IMFADevice } from "@/components/auth-view/types/session";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,11 @@ export function MFADeviceRow({
     <div className="flex items-center justify-between rounded-lg border p-4">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-          <Smartphone className="h-5 w-5 text-muted-foreground" />
+          {device.type === "webauthn" ? (
+            <KeyRound className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <Smartphone className="h-5 w-5 text-muted-foreground" />
+          )}
         </div>
         <div>
           <div className="flex items-center gap-2">

@@ -61,6 +61,13 @@ func (s MFAService) Routes() chi.Router {
 				Post("/verify", s.verifyDeviceHandler())
 		})
 	})
+
+	r.Route("/webauthn", func(r chi.Router) {
+		r.With(m.Validate[models.WebAuthnRegistrationBeginBody]).
+			Post("/register/begin", handlers.CreateHandler(s.BeginWebAuthnRegistration))
+		r.With(m.Validate[models.WebAuthnRegistrationFinishBody]).
+			Post("/register/{id0}/finish", handlers.BodyHandler(s.FinishWebAuthnRegistration))
+	})
 	return r
 }
 

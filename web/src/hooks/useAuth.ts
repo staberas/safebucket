@@ -5,6 +5,7 @@ import type { ILoginForm, Session } from "@/components/auth-view/types/session";
 import type { LoginResult } from "@/lib/auth-service";
 import {
   verifyMFALogin as authVerifyMFA,
+  verifyWebAuthnMFALogin as authVerifyWebAuthnMFA,
   loginWithCredentials,
   loginWithLDAP,
   loginWithProvider,
@@ -88,11 +89,27 @@ export function useLogin() {
     [router, queryClient],
   );
 
+  const verifyWebAuthnMFA = useCallback(
+    async (
+      deviceId?: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+      const result = await authVerifyWebAuthnMFA(deviceId);
+      if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+        const session = await queryClient.fetchQuery(meQueryOptions());
+        router.update({ context: { queryClient, session } });
+      }
+      return result;
+    },
+    [router, queryClient],
+  );
+
   return {
     loginOAuth,
     loginLocal,
     loginLDAP,
     verifyMFA,
+    verifyWebAuthnMFA,
   };
 }
 
